@@ -26,7 +26,9 @@ def uniform_loop(start, end, num_folds, split_ratio):
         test_size = 1
         warnings.warn("Test size is set to 1. Adjust parameters of folds.")
 
-    train_size = split_ratio * test_size
+    train_size = num_samples - num_folds*test_size # ajust train size instead
+    if train_size < 0:
+        raise ValueError("Train size is negative. Adjust parameters of folds.")
 
     indices = [start, start + train_size, start + train_size + test_size]
     # todo: if numpy is imported use

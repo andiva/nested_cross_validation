@@ -13,7 +13,7 @@ class NCVTestCases(unittest.TestCase):
 
     def test_uniform_inner_loop(self):
         inds = list(uniform_loop(22, 66, 2, 1))
-        expected_inds = [([22, 37], [38, 51]), ([37, 51], [52, 66])]
+        expected_inds = [([22, 36], [37, 51]), ([37, 51], [52, 66])]
         self.assertEqual(inds, expected_inds)
 
 
