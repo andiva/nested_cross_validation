@@ -64,7 +64,7 @@ class TimeDelayPolynomialRegression(BaseEstimator):
             raise RuntimeError("Train model first")
 
         Xtrain = rolling_window(X, self.delay)
-        return self.model.predict(Xtrain)
+        return self.model.predict(Xtrain) # polynomial linear regression
 
     def predict(self, X):
         # propogates prediction in time
@@ -78,7 +78,7 @@ class TimeDelayPolynomialRegression(BaseEstimator):
         return X_out[:, self.output_indices]
 
     def score(self, X, y=None):
-        # use negative MSE metric
-        Ytrue = X[self.delay:, self.output_indices] # true values
-        Ypred = self.predict(X)[self.delay:]
+        # use negative MSE metric for one-step prediction
+        Ypred = self.predict_one_step_ahead(X)
+        Ytrue = X[-Ypred.shape[0]:, self.output_indices]
         return -mse(Ypred, Ytrue)
