@@ -3,8 +3,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 from pandas.plotting import register_matplotlib_converters
+from sklearn.model_selection import GridSearchCV
 
 from time_delay_polynomial_regression import TimeDelayPolynomialRegression
+from nested_cross_validation.loops import uniform_loop
 
 
 def load_csv(filename="SWaT_P1.csv"):
@@ -30,6 +32,12 @@ def plot_sensors(t, X):
     return ax1
 
 
+def get_array_indices(num_samples, num_folds, split_ratio):
+    """ Converts start-end indices to indices array """
+    for trn, tst in uniform_loop(0, num_samples-1, num_folds, split_ratio):
+        yield np.arange(trn[0], trn[1]+1), np.arange(tst[0], tst[1]+1)
+
+
 def main():
     register_matplotlib_converters()
     times, X = load_csv()
@@ -52,6 +60,29 @@ def main():
     ax.plot(times[train_size:], Y_predict, 'r-', alpha=0.7,
                                                  label="Prediction ahead")
 
+    # estimate model performance with nested cross-validation
+    param_grid = {'delay': np.arange(1, 3),
+                  'degree': np.arange(1, 3),
+                  'penalty': [True, False],
+                  'fit_intercept': [True, False],}
+
+    scores = []
+    for trn, tst in uniform_loop(0, X.shape[0]-1, num_folds=3, split_ratio=4):
+        Xtrn, Xtst = X[trn[0]:trn[1]], X[tst[0]:tst[1]] # outer loop
+
+        # run tuning on inner loop: 2 folds with split_ratio=4
+        grid_search = GridSearchCV(TimeDelayPolynomialRegression(), param_grid,
+                                   cv=get_array_indices(Xtrn.shape[0], 2, 1),
+                                   verbose=0)
+        grid_search.fit(Xtrn)
+        score = grid_search.best_estimator_.score(Xtst)
+        scores.append(score)
+
+    scores = np.array(scores)
+    print(f"nested CV scores: {scores}")
+    print(f"mean performance: {scores.mean()}")
+
+    # plot results
     ax.legend()
     plt.show()
     return
