@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 
 from pandas.plotting import register_matplotlib_converters
 
+from time_delay_polynomial_regression import TimeDelayPolynomialRegression
+
 
 def load_csv(filename="SWaT_P1.csv"):
     df = pd.read_csv(filename)
@@ -30,7 +32,6 @@ def plot_sensors(t, X):
 
 def main():
     register_matplotlib_converters()
-
     times, X = load_csv()
 
     # todo: filter sensor LIT101, for example
@@ -39,8 +40,21 @@ def main():
 
     ax = plot_sensors(times, X)
 
+    # simple fitting with the first 70% of samples
+    # and prediction for remaining sample
+    train_size = int(0.7*X.shape[0])
+    X_train, X_test = X[:train_size], X[train_size:]
+
+    model = TimeDelayPolynomialRegression(degree=2, delay=2)
+    model.fit(X_train)
+    print('score:', model.score(X_test))
+    Y_predict = model.predict(X_test)
+    ax.plot(times[train_size:], Y_predict, 'r-', alpha=0.7,
+                                                 label="Prediction ahead")
+
     ax.legend()
     plt.show()
+    return
 
 
 if __name__ == "__main__":
